@@ -1,0 +1,49 @@
+Sub countIf()
+
+' ------------------------------------------------------
+'   MACRO:  countIf()
+'   PURPOSE:THIS MACRO RUNS A COUNTIF FUNCTION OVER USER
+'           SPECIFIED COLUMN.  THE USER SPECIFIES THE
+'           COLUMN THROUGH AN INPUT BOX.  THE RESULTS
+'           ARE DEPOSITED IN THE ACTIVE CELL AT THE
+'           TIME OF MACRO EXECUTION.
+'   ------------------------------------------------------
+'   AUTHOR: JACQUELINE RICE
+'   DATE:   MAY 2017
+'   ------------------------------------------------------
+
+    ' INITIALIZING VARIABLES
+    Dim varCol As String
+    Dim varRowCount As Double
+    Dim arrCountRes As Variant
+    Dim arrCountRange As Variant
+    Dim rngCount As Range
+     
+    ' DEFINING COLUMN TO USE AS RANGE FOR COUNTIF
+    '   INPUTBOX TAKES USER INPUT
+    'varCol = "C"
+    varCol = UCase(InputBox("Enter the column to count", Title:="Column Selection", Default:="C"))
+    
+    ' COUNTING NUMBER OF ROWS IN SELECTED COLUMN
+    varRowCount = ActiveSheet.Range(varCol & "1").End(xlDown).Row - 1
+    
+    ' REDIMENSIONALIZING ARRAYS WITH KNOWN SIZE
+    ReDim arrCountRes(1 To varRowCount, 1 To 1) As Integer
+    ReDim arrCountRange(1 To varRowCount, 1 To 1) As Integer
+    
+    ' POPULATING ARRAYS WITH COUNT RANGE
+    arrCountRange = ActiveSheet.Range(varCol & "2").Resize(varRowCount, 1)
+    Set rngCount = ActiveSheet.Range(varCol & "2:" & varCol & varRowCount + 1)
+    
+    ' LOOPING THROUGH EACH ROW IN RANGE
+    For i = 1 To varRowCount
+        arrCountRes(i, 1) = Application.WorksheetFunction.countIf(rngCount, arrCountRange(i, 1))
+    Next i
+    
+    ' PUTTING RESULTS OF COUNT INTO SHEET BASED ON LOCATION OF ACTIVE CELL
+    ActiveCell.Resize(varRowCount, 1) = arrCountRes
+    
+    ' PRINTING ROW COUNT AS CONFIRMATION OF COMPLETION
+    Debug.Print varRowCount
+
+End Sub
