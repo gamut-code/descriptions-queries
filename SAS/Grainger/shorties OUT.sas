@@ -1,0 +1,2 @@
+PROC EXPORT DATA=LIB.SHORTIES OUTFILE="F:/LabUsers/CGabriel/Grainger_Shorties/OUTPUT/shorties"
+	DBMS=XLSX REPLACE;
