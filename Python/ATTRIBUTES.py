@@ -20,13 +20,17 @@ def get_stats(df):
     return stats
 
 
+def dict_search(dict, searchfor):
+    total = [value for (key, value) in dict.items() if searchfor in key]
+    return total
+
+
 def get_fill_rate(df):
     analysis = df['Attribute'].value_counts().to_dict()
-    total = analysis['Item']
+    total = dict_search(analysis, 'Item')
     df['Fill_Rate %'] = (df.groupby('Attribute')['Attribute'].transform('count')/total)*100
     fill_rate = pd.DataFrame(df.groupby(['Attribute'])['Fill_Rate %'].count()/total*100)
     fill_rate = fill_rate.sort_values(by=['Fill_Rate %'], ascending=False)
-#    fill_rate = pd.DataFrame(att.size().reset_index(drop=True))
     return fill_rate
 
     
@@ -41,7 +45,7 @@ if data_type == 'node':
         if df.empty == False:
             df_stats = get_stats(df)
             df_fill = get_fill_rate(df)
-            fd.attr_data_out(df, df_stats, df_fill, k)
+            fd.attr_data_out(settings.directory_name, df, df_stats, df_fill, k)
         else:
             print('All SKUs are R4, R9, or discontinued')
         print (k) 
