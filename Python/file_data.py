@@ -6,8 +6,8 @@ Created on Sun Mar 31 20:58:51 2019
 """
 import os
 from pathlib import Path
-import re
 import pandas as pd
+import settings
 
 
 def search_type():
@@ -66,6 +66,7 @@ def blue_search_level():
     return search_level
 
 
+
 def modify_name(df, replace_char, replace_with):
     return df.str.replace(replace_char, replace_with)
 
@@ -78,8 +79,15 @@ def col_order(df, order):
     return df
 
 
+def get_col_widths(df):
+    #find maximum length of the index column
+    idx_max = max([len(str(s)) for s in df.index.values] + [len(str(df.index.name))])
+    #Then concatenate this to max of the lengths of column name and its values for each column
+    return [idx_max] + [max([len(str(s)) for s in df[col].values] + [len(col)]) for col in df.columns]
+
+
 #function to get node/SKU data from user or read from the data.csv file
-def data_in(data_type, directory_name, file_name):
+def data_in(data_type, directory_name):
 #    type_list = ['Node', 'SKU']
     
     if data_type == 'node':
@@ -98,9 +106,12 @@ def data_in(data_type, directory_name, file_name):
         return search_data
     else:
         #read file
-        file_path = Path(directory_name)/file_name  #setup the data file to read
+#        file_name = settings.get_file_name()
+#        file_path = Path(directory_name)/file_name  #setup the data file to read
 #        file_path = os.path.join(directory_name, file_name)
-        file_data = [re.split('\s+', i.strip('\n')) for i in open(file_path)]
+#        file_data = [re.split('\s+', i.strip('\n')) for i in open(file_path)]
+        file_data = settings.get_file_data()
+
         if data_type == 'node':
             search_data = [int(row[0]) for row in file_data[1:]]
             return search_data
@@ -110,51 +121,92 @@ def data_in(data_type, directory_name, file_name):
             return search_data
         elif data_type == 'sku':
             search_data = [row[0] for row in file_data[1:]]
-            return search_data
+            return search_data        
 
+
+def outfile_name (directory_name, quer, df, search_level, gamut='no'):
+#generate the file name used by the various output functions
+    if search_level == 'SKU':
+        outfile = Path(directory_name)/"SKU REPORT.xlsx"
+    else:    
+        if gamut == 'yes':
+            if search_level == 'cat.SEGMENT_ID':    #set directory path and name output file
+                outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,2], df.iloc[0,3], quer)
+            elif search_level == 'cat.FAMILY_ID':
+                outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,4], df.iloc[0,5], quer)
+            else:
+                outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,6], df.iloc[0,7], quer)
+        elif quer == 'ATTRIBUTES':
+            outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,3], df.iloc[0,2], quer)
+        else:
+            if search_level == 'cat.SEGMENT_ID':
+                outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,1], df.iloc[0,2], quer)
+            elif search_level == 'cat.FAMILY_ID':
+                outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,3], df.iloc[0,4], quer)
+            else:
+                outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,5], df.iloc[0,6], quer)
+
+    return outfile
+    
 
 #general output to xlsx file, used for the basic query
 def data_out(directory_name, grainger_df, search_level):
     """basic output for any Grainger query""" 
     os.chdir(directory_name) #set output file path
+    quer = 'HIER'
     
     if grainger_df.empty == False:
       #  grainger_df['CATEGORY_NAME'] = modify_name(grainger_df['CATEGORY_NAME'], '/', '_') #clean up node names to include them in file names
-        if search_level == 'cat.SEGMENT_ID':
-            outfile = Path(directory_name)/"{} HIER.xlsx".format(grainger_df.iloc[0,2])
-        elif search_level == 'cat.FAMILY_ID':
-            outfile = Path(directory_name)/"{} HIER.xlsx".format(grainger_df.iloc[0,4])
-        else:
-            outfile = Path(directory_name)/"{} HIER.xlsx".format(grainger_df.iloc[0,6])
+        outfile = outfile_name (directory_name, quer, grainger_df, search_level)      
         grainger_df.to_excel (outfile, index=None, header=True, encoding='utf-8')
     else:
         print('EMPTY DATAFRAME')
 
 
-#output for short descriptions for Grainger and Gamut
-def shorties_data_out(directory_name, grainger_df, gamut_df, k):
+
+def shorties_data_out(directory_name, grainger_df, gamut_df, search_level):
     """merge Granger and Gamut data and output as Excel file"""
     
+    quer = 'DESC'
     grainger_df['CATEGORY_NAME'] = modify_name(grainger_df['CATEGORY_NAME'], '/', '_') #clean up node names to include them in file names   
  
+    grainger_df.set_index('Grainger_SKU', inplace=True)
+    
     #if gamut data is present for these skus, merge with grainger data
     if gamut_df.empty == False:
+        gamut = 'yes'
         grainger_df = grainger_df.merge(gamut_df, how="left", on=["Grainger_SKU"])
-        order = [0, 9, 1, 2, 3, 6, 4, 5, 10, 11, 12, 8, 7]
+        order = [0, 12, 1, 2, 3, 4, 5, 6, 9, 7, 8, 13, 14, 15, 11, 10]
         grainger_df = col_order(grainger_df, order)
-        outfile = Path(directory_name)/"{} {}.xlsx".format(k, grainger_df.iloc[0,4])    #set directory path and name output file
+        outfile = outfile_name (directory_name, quer, grainger_df, search_level, gamut)
     else:
-        outfile = Path(directory_name)/"{} {}.xlsx".format(k, grainger_df.iloc[0,3])
+        outfile = outfile_name (directory_name, quer, grainger_df, search_level)
 
-    grainger_df.to_excel (outfile, index=None, header=True, encoding='utf-8')
+    writer = pd.ExcelWriter(outfile, engine='xlsxwriter')
+      
+    grainger_df.to_excel (writer, sheet_name="Shorties", startrow=0, startcol=0, index=False)
+   
+  #  workbook  = writer.book
+    worksheet1 = writer.sheets['Shorties']
     
+    col_widths = get_col_widths(grainger_df)
+    col_widths = col_widths[1:]
+    
+    for i, width in enumerate(col_widths):
+        worksheet1.set_column(i, i, width)
+  
+    writer.save()
     
 #output for attribute values for Grainger
-def attr_data_out(directory_name, df, df_stats, df_fill, k):
+def attr_data_out(directory_name, df, df_stats, df_fill, search_level):
     # Create a Pandas Excel writer using XlsxWriter as the engine.
     df['CATEGORY_NAME'] = modify_name(df['CATEGORY_NAME'], '/', '_') #clean up node names to include them in file names   
     df.drop(columns=['Count', 'Fill_Rate %'], inplace=True)
-    outfile = Path(directory_name)/"{} {} ATTRIBUTES.xlsx".format(k, df.iloc[0,2])   #set directory path and name output file
+    
+    quer = 'ATTRIBUTES'
+    outfile = outfile_name (directory_name, quer, df, search_level)
+
+  #  outfile = Path(directory_name)/"{} {} ATTRIBUTES.xlsx".format(k, df.iloc[0,2])   #set directory path and name output file
     
     writer = pd.ExcelWriter(outfile, engine='xlsxwriter')
     
@@ -174,24 +226,43 @@ def attr_data_out(directory_name, df, df_stats, df_fill, k):
                                   'text_wrap': True,
                                   'num_format': '##0.00'})
 
+    col_widths = get_col_widths(df_stats)
+    #col_widths = col_widths[1:]
+    
+    for i, width in enumerate(col_widths):
+        worksheet1.set_column(i, i, width)
+        
     #setup display for Stats sheet
-    worksheet1.set_column('A:A', 40, layout)
-    worksheet1.set_column('B:B', 60, layout)
-    worksheet1.set_column('F:F', 40, layout)
-    worksheet1.set_column('G:G', 15, num_layout)
-    worksheet1.set_column('H:H', 20, layout)
+  #  worksheet1.set_column('A:A', 40, layout)
+  #  worksheet1.set_column('B:B', 60, layout)
+  #  worksheet1.set_column('F:F', 40, layout)
+    worksheet1.set_column('G:G', num_layout)
+  #  worksheet1.set_column('H:H', 20, layout)
+  
+    col_widths = get_col_widths(df)
+    col_widths = col_widths[1:]
+    
+    for i, width in enumerate(col_widths):
+        worksheet2.set_column(i, i, width)
+        
     #steup display for Data sheet
-    worksheet2.set_column('F:F', 25, layout)
-    worksheet2.set_column('G:G', 30, layout)
-    worksheet2.set_column('H:H', 60, layout)
+    #worksheet2.set_column('F:F', 25, layout)
+    #worksheet2.set_column('G:G', 30, layout)
+    #worksheet2.set_column('H:H', 60, layout)
     
     writer.save()
 
 
 #output for specific sample pull
-def sample_data_out(directory_name, sku_count, audit_df, df, sample):
+def sample_data_out(directory_name, sku_count, audit_df, grainger_df, sample, search_level):
     """Create the Audit Analysis spreadsheet. 'Audit List' (sheet 1) = the list of SKUs to be audited)"""
-    outfile = Path(directory_name)/"{} AUDIT LIST.xlsx".format(df.iloc[0,2])   #set directory path and name output file
+    
+    if search_level == 'cat.SEGMENT_ID':
+        outfile = Path(directory_name)/"{} AUDIT LIST.xlsx".format(grainger_df.iloc[0,2])
+    elif search_level == 'cat.FAMILY_ID':
+        outfile = Path(directory_name)/"{} AUDIT LIST.xlsx".format(grainger_df.iloc[0,4])
+    else:
+        outfile = Path(directory_name)/"{} AUDIT LIST.xlsx".format(grainger_df.iloc[0,6])
 
     writer = pd.ExcelWriter(outfile, engine='xlsxwriter')
 
@@ -200,7 +271,7 @@ def sample_data_out(directory_name, sku_count, audit_df, df, sample):
     # Write each dataframe to a different worksheet.
     audit_df.to_excel(writer, sheet_name='Audit List', index=False)
     sku_count.to_excel(writer, sheet_name='L3 SKU Counts', index=False)
-    df.to_excel(writer, sheet_name='Original Data', index=False)
+    grainger_df.to_excel(writer, sheet_name='Original Data', index=False)
     
     if type(sample) == dict:
         weightedSample = pd.DataFrame([sample]).T

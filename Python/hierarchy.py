@@ -36,7 +36,7 @@ def generate_data():
         search_level = fd.blue_search_level()
 
     #ask user for node number/SKU or pull from file if desired    
-    search_data = fd.data_in(data_type, settings.directory_name, settings.file_name)
+    search_data = fd.data_in(data_type, settings.directory_name)
 
     sku_status = skus_to_pull() #determine whether or not to include discontinued items in the data pull
 
