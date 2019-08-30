@@ -20,9 +20,9 @@ def get_stats(df):
     return stats
 
 
-def dict_search(dict, searchfor):
+def item_search(analysis, searchfor):
     """search the dictionary of attributes for any key containing the passed in value. Used to look for any 'Item' attributes"""
-    total = [value for (key, value) in dict.items() if searchfor in key]
+    total = [value for (key, value) in analysis.items() if searchfor in key]
     if len(total) > 1:
         total = max(total)
     return total
@@ -31,7 +31,7 @@ def dict_search(dict, searchfor):
 def get_fill_rate(df):
     """create a dictionary with attribute name as key and counts as values"""
     analysis = df['Attribute'].value_counts().to_dict()
-    total = dict_search(analysis, 'Item')
+    total = item_search(analysis, 'Item')
     df['Fill_Rate %'] = (df.groupby('Attribute')['Attribute'].transform('count')/total)*100
     fill_rate = pd.DataFrame(df.groupby(['Attribute'])['Fill_Rate %'].count()/total*100).reset_index()
     fill_rate = fill_rate.sort_values(by=['Fill_Rate %'], ascending=False)

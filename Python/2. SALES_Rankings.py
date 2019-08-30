@@ -123,6 +123,7 @@ def data_out(grainger_df, sales_df, supplier_df, top_suppliers):
     
     layout = workbook.add_format()
     layout.set_text_wrap('text_wrap')
+    layout.set_align('left')
     
     sales_layout = workbook.add_format()
     sales_layout.set_num_format('#,##0.00')
@@ -134,7 +135,7 @@ def data_out(grainger_df, sales_df, supplier_df, top_suppliers):
     worksheet1.set_column('B:B', 30, layout)
     worksheet1.set_column('D:D', 30, layout)
     worksheet1.set_column('F:F', 40, layout)
-    worksheet1.set_column('G:G', 20, sales_layout)
+    worksheet1.set_column('G:G', 20, num_layout)
     worksheet1.write(0, 9, 'Top 5 Suppliers from top 10 Sales Categories', cell_format)
     worksheet1.set_column('J:J', 20, layout)
     worksheet1.set_column('K:K', 40, layout)
@@ -174,7 +175,7 @@ def vendor_data_out(vendor_df):
     layout.set_text_wrap('text_wrap')
 
     num_layout = workbook.add_format()
-    num_layout.set_num_format('#,##0.00')
+    num_layout.set_num_format('#,##0')
                               
     worksheet1.set_column('B:B', 30, layout)
     worksheet1.set_column('D:D', 30, layout)

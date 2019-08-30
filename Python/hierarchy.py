@@ -65,5 +65,10 @@ def generate_data():
     elif data_type == 'sku':
         sku_str = ", ".join("'" + str(i) + "'" for i in search_data)
         grainger_df = gcom.grainger_q(grainger_basic_query, 'item.MATERIAL_NO', sku_str)
-
+    elif data_type == 'supplier':
+        for k in search_data:
+            temp_df = gcom.grainger_q(grainger_basic_query, 'supplier.SUPPLIER_NO', k)
+            grainger_df = pd.concat([grainger_df, temp_df], axis=0)            
+            print(k)
+            
     return [grainger_df, search_level]

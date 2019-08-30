@@ -33,12 +33,15 @@ def search_type():
     if data_type == 'other':
         while True:
             try:
-                data_type = input ('Query Type?\n1. Attribute Value\n2. Attribute Name ')
+                data_type = input ('Query Type?\n1. Attribute Value\n2. Attribute Name\n3. Supplier ID ')
                 if data_type in ['attribute value', 'Attribute Value', 'value', 'Value', 'VALUE', '1']:
                     data_type = 'value'
                     break
                 elif data_type in ['attribute name', 'Attribute Name', 'name', 'Name', 'NAME', '2']:
                     data_type = 'name'
+                    break
+                if data_type in ['supplier id', 'supplier ID', 'Supplier ID', 'SUPPLIER ID', 'Supplier id', 'ID', 'id', '3']:
+                    data_type = 'supplier'
                     break
             except ValueError:
                 print('Invalid search type')
@@ -100,7 +103,9 @@ def data_in(data_type, directory_name):
         search_data = input ('Input attribute value to search for: ')
     elif data_type == 'name':
         search_data = input ('Input attribute name to search for: ')
-  
+    elif data_type == 'supplier':
+        search_data = input ('Input Supplier ID to search for: ')
+        
     if search_data != "":
         search_data = [search_data]
         return search_data
@@ -128,7 +133,7 @@ def outfile_name (directory_name, quer, df, search_level, gamut='no'):
 #generate the file name used by the various output functions
     if search_level == 'SKU':
         outfile = Path(directory_name)/"SKU REPORT.xlsx"
-    else:    
+    else:   
         if gamut == 'yes':
             if search_level == 'cat.SEGMENT_ID':    #set directory path and name output file
                 outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,2], df.iloc[0,3], quer)
@@ -144,8 +149,7 @@ def outfile_name (directory_name, quer, df, search_level, gamut='no'):
             elif search_level == 'cat.FAMILY_ID':
                 outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,3], df.iloc[0,4], quer)
             else:
-                outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,5], df.iloc[0,6], quer)
-
+                outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,4], df.iloc[0,5], quer)
     return outfile
     
 
@@ -157,8 +161,15 @@ def data_out(directory_name, grainger_df, search_level):
     
     if grainger_df.empty == False:
       #  grainger_df['CATEGORY_NAME'] = modify_name(grainger_df['CATEGORY_NAME'], '/', '_') #clean up node names to include them in file names
-        outfile = outfile_name (directory_name, quer, grainger_df, search_level)      
-        grainger_df.to_excel (outfile, index=None, header=True, encoding='utf-8')
+        outfile = outfile_name (directory_name, quer, grainger_df, search_level)
+        writer = pd.ExcelWriter(outfile, engine='xlsxwriter')
+        grainger_df.to_excel (writer, sheet_name="DATA", startrow=0, startcol=0, index=False)
+        worksheet = writer.sheets['DATA']
+        col_widths = get_col_widths(grainger_df)
+        col_widths = col_widths[1:]
+        for i, width in enumerate(col_widths):
+            worksheet.set_column(i, i, width) 
+        writer.save()
     else:
         print('EMPTY DATAFRAME')
 
@@ -220,35 +231,25 @@ def attr_data_out(directory_name, df, df_stats, df_fill, search_level):
     worksheet1 = writer.sheets['Stats']
     worksheet2 = writer.sheets['Data']
     
-    layout = workbook.add_format({'align': 'left',
-                                  'text_wrap': True})
-    num_layout = workbook.add_format({'align': 'left',
-                                  'text_wrap': True,
-                                  'num_format': '##0.00'})
-
-    col_widths = get_col_widths(df_stats)
-    #col_widths = col_widths[1:]
+    layout = workbook.add_format()
+    layout.set_text_wrap('text_wrap')
+    layout.set_align('left')
     
-    for i, width in enumerate(col_widths):
-        worksheet1.set_column(i, i, width)
+    num_layout = workbook.add_format()
+    num_layout.set_num_format('##0.00')
+                              
         
     #setup display for Stats sheet
-  #  worksheet1.set_column('A:A', 40, layout)
-  #  worksheet1.set_column('B:B', 60, layout)
-  #  worksheet1.set_column('F:F', 40, layout)
-    worksheet1.set_column('G:G', num_layout)
-  #  worksheet1.set_column('H:H', 20, layout)
-  
-    col_widths = get_col_widths(df)
-    col_widths = col_widths[1:]
+    worksheet1.set_column('A:A', 40, layout)
+    worksheet1.set_column('B:B', 60, layout)
+    worksheet1.set_column('F:F', 40, layout)
+    worksheet1.set_column('G:G', 15, num_layout)
+    worksheet1.set_column('H:H', 20, layout)
     
-    for i, width in enumerate(col_widths):
-        worksheet2.set_column(i, i, width)
-        
     #steup display for Data sheet
-    #worksheet2.set_column('F:F', 25, layout)
-    #worksheet2.set_column('G:G', 30, layout)
-    #worksheet2.set_column('H:H', 60, layout)
+    worksheet2.set_column('F:F', 25, layout)
+    worksheet2.set_column('G:G', 30, layout)
+    worksheet2.set_column('H:H', 60, layout)
     
     writer.save()
 

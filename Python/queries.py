@@ -52,6 +52,58 @@ gamut_short_query="""
                 AND {} IN ({})
             """  
        
+#pull gamut attributs by SKU to mearch with grainger_df
+gamut_attr_query="""
+        WITH RECURSIVE tax AS (
+                SELECT  id,
+            name,
+            ARRAY[]::INTEGER[] AS ancestors,
+            ARRAY[]::character varying[] AS ancestor_names
+                FROM    taxonomy_category as category
+                WHERE   "parentId" IS NULL
+                AND category.deleted = false
+
+                UNION ALL
+
+                SELECT  category.id,
+            category.name,
+            tax.ancestors || tax.id,
+            tax.ancestor_names || tax.name
+                FROM    taxonomy_category as category
+                INNER JOIN tax ON category."parentId" = tax.id
+                WHERE   category.deleted = false
+            )
+
+        SELECT DISTINCT ON (tax_att.name, tprodvalue.value)
+            array_to_string(tax.ancestor_names || tax.name,' > ') as "PIM Terminal Node Path"
+            , tprod."categoryId" AS "PIM Terminal Node ID"
+            , tprod."supplierSku" as "Grainger_SKU"
+            , tprod."gtPartNumber" as "Gamut_SKU"
+            , tax_att.name as "Attribute Name"
+            , tax_att.description as "Attribute Definition"
+            , tax_att."unitGroupId" AS "UOM ID"
+            , tax_att."dataType" as "Data Type"
+            , tprodvalue.value as "Original Value"
+            , tprodvalue.unit as "UOM"
+            , tprodvalue."valueNormalized" as "Normalized Value"
+            , tprodvalue."unitNormalized" as "UOM"
+  
+        FROM  taxonomy_product tprod
+
+        INNER JOIN tax
+            ON tax.id = tprod."categoryId"
+
+        LEFT JOIN  taxonomy_product_attribute_value tprodvalue
+            ON tprod.id = tprodvalue."productId"
+
+        LEFT JOIN taxonomy_attribute tax_att
+            ON tax_att.id = tprodvalue."attributeId"
+
+        WHERE tprod.deleted = 'f'
+            AND {} IN ({})
+        """
+
+
 #get basic SKU list and hierarchy data from Grainger teradata material universe
 grainger_basic_query="""
             SELECT item.MATERIAL_NO AS Grainger_SKU
@@ -65,6 +117,8 @@ grainger_basic_query="""
             , item.SALES_STATUS
             , yellow.PROD_CLASS_ID AS Gcom_Yellow
             , flat.Web_Parent_Name AS Gcom_Web_Parent
+            , supplier.SUPPLIER_NO AS Supplier_ID
+            , supplier.SUPPLIER_NAME AS Supplier
 
 
             FROM PRD_DWH_VIEW_MTRL.CATEGORY_V AS cat
@@ -81,7 +135,13 @@ grainger_basic_query="""
             FULL OUTER JOIN PRD_DWH_VIEW_LMT.Yellow_Heir_Flattend_view AS flat
                 ON yellow.PROD_CLASS_ID = flat.Heir_End_Class_Code
 
-            WHERE 	item.SALES_STATUS NOT IN ('DG', 'DV', 'WV', 'WG')
+            INNER JOIN PRD_DWH_VIEW_LMT.material_v AS prod
+                on prod.MATERIAL = item.MATERIAL_NO
+
+            INNER JOIN PRD_DWH_VIEW_MTRL.supplier_v AS supplier
+                ON prod.vendor = supplier.SUPPLIER_NO
+                                
+            WHERE item.SALES_STATUS NOT IN ('DG', 'DV', 'WV', 'WG')
             	AND {} IN ({})
             """
 
@@ -104,7 +164,7 @@ grainger_discontinued_query="""
             INNER JOIN PRD_DWH_VIEW_MTRL.CATEGORY_V AS cat
             	ON cat.CATEGORY_ID = item.CATEGORY_ID
         		AND item.DELETED_FLAG = 'N'
-
+                
             FULL OUTER JOIN PRD_DWH_VIEW_LMT.Prod_Yellow_Heir_Class_View AS yellow
                 ON yellow.PRODUCT_ID = item.MATERIAL_NO
 
