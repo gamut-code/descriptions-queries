@@ -18,7 +18,7 @@ gcom = GraingerQuery()
 gamut = GamutQuery_15()
 
 def gamut_skus(grainger_skus):
-    #get basic list of gamut SKUs to pull the related PIM nodes
+    """get basic list of gamut SKUs to pull the related PIM nodes"""
     sku_list = grainger_skus['Grainger_SKU'].tolist()
     gamut_skus = ", ".join("'" + str(i) + "'" for i in sku_list)
     gamut_sku_list = gamut.gamut_q15(gamut_basic_query, 'tprod."supplierSku"', gamut_skus)
@@ -35,6 +35,13 @@ def gamut_atts(node):
 
     return df
 
+def value_counts(df):
+    """return unique values for each attribute with a count of how many times each is used in the node"""
+    df['Count'] =1
+    vals = pd.DataFrame(df.groupby(['Attribute', 'Attribute_Value'])['Count'].sum())
+    vals = vals.sort_values(by=['Count'], ascending=[False])
+    top_vals = vals.head(5)
+    return top_vals
 
 def grainger_process(grainger_df, k):
     """create a list of grainger skus, run through through the gamut_skus query and pull gamut attribute data if skus are present
@@ -91,7 +98,7 @@ if data_type == 'node':
         grainger_df = gcom.grainger_q(grainger_attr_query, search_level, k)
         if grainger_df.empty == False:
             temp_df, grainger_df, gamut_df  = grainger_process(grainger_df, k)
-            attribute_df = pd.concat([attribute_df, temp_df], axis=0)
+            attribute_df = pd.concat([attribute_df, temp_df], axis=0, sort=False)
         else:
             print('No attribute data')
         attribute_df['Grainger-Gamut Terminal Node Mapping'] = attribute_df['CATEGORY_NAME']+' -- '+attribute_df['Gamut Node Name']
