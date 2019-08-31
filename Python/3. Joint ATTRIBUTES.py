@@ -27,6 +27,7 @@ def gamut_skus(grainger_skus):
 
 
 def gamut_atts(node):
+    """pull gamut attributes based on the PIM node list created by gamut_skus"""
     df = pd.DataFrame()
     #pull attributes for the next pim node in the gamut list
     df = gamut.gamut_q15(gamut_attr_query, 'tprod."categoryId"', node)
@@ -35,25 +36,43 @@ def gamut_atts(node):
 
     return df
 
-def value_counts(df):
-    """return unique values for each attribute with a count of how many times each is used in the node"""
+
+def grainger_value_counts(df):
+    """find the top 5 most used values for each attribute and return as sample_values"""
+    top_vals = pd.DataFrame()
+    temp_att = pd.DataFrame()
+    
     df['Count'] =1
-    vals = pd.DataFrame(df.groupby(['Attribute', 'Attribute_Value'])['Count'].sum())
-    vals = vals.sort_values(by=['Count'], ascending=[False])
-    top_vals = vals.head(5)
+    atts = grainger_df['Grainger_Attribute_Name'].unique()
+    
+    vals = pd.DataFrame(df.groupby(['Grainger_Attribute_Name', 'Grainger_Attribute_Value'])['Count'].sum())
+    vals = vals.reset_index()
+    
+    #top_vals = vals.nlargest(5,['Grainger_Attribute_Name','Count'])
+    #top_vals = df.groupby('Grainger_Attribute_Name', group_keys=False).apply(lambda x: x.nlargest(5, 'Count'))
+    for attribute in atts:
+        temp_att = vals.loc[vals['Grainger_Attribute_Name']== attribute]
+        temp_att = temp_att.sort_values(by=['Count'], ascending=[False]).head(5)
+        top_vals = pd.concat([top_vals, temp_att], axis=0)
+        
+    top_vals = top_vals.groupby('Grainger_Attribute_Name')['Grainger_Attribute_Value'].apply('; '.join).reset_index()
+        
     return top_vals
 
-def grainger_process(grainger_df, k):
+
+def grainger_process(grainger_df, grainger_sample, k):
     """create a list of grainger skus, run through through the gamut_skus query and pull gamut attribute data if skus are present
         concat both dataframs and join them on matching attribute names"""
     df = pd.DataFrame()
-    gamut_FINAL = pd.DataFrame()
+    #gamut_FINAL = pd.DataFrame()
     
     grainger_skus = grainger_df.drop_duplicates(subset='Grainger_SKU')  #create list of unique grainger skus that feed into gamut query
     
     grainger_df = grainger_df.drop_duplicates(subset=['L3', 'Grainger_Attr_ID'])  #group by L3 and attribute name and keep unique
     grainger_df['Grainger Blue Path'] = grainger_df['L1']+' > '+grainger_df['L2']+' > '+grainger_df['CATEGORY_NAME'] #compile grainger path details
     grainger_df = grainger_df.drop(columns=['Grainger_SKU', 'Grainger_Attribute_Value']) #remove unneeded columns
+    grainger_df = grainger_df.merge(grainger_sample, on=['Grainger_Attribute_Name'])
+
     grainger_df['Grainger_Attribute_Name'] = grainger_df['Grainger_Attribute_Name'].str.lower()  #prep att name for merge
     
     gamut_sku_list = gamut_skus(grainger_skus) #get gamut sku list to determine pim nodes to pull
@@ -68,13 +87,12 @@ def grainger_process(grainger_df, k):
             grainger_df['PIM Terminal Node ID'] = int(node)
             gamut_df['L3'] = int(k)  #add grainger L3 column for gamut attributes
             gamut_df['Gamut_Attribute_Name'] = gamut_df['Gamut_Attribute_Name'].str.lower()  #prep att name for merge
-            gamut_FINAL = pd.concat([gamut_FINAL, gamut_df], axis=0)
+            #gamut_FINAL = pd.concat([gamut_FINAL, gamut_df], axis=0)
             #create df based on names that match exactly
             temp_df = grainger_df.merge(gamut_df, left_on=['Grainger_Attribute_Name', 'L3', 'PIM Terminal Node ID'], right_on=['Gamut_Attribute_Name', 'L3', 'PIM Terminal Node ID'], how='outer')
             df = pd.concat([df, temp_df], axis=0)
 
-    return df, grainger_df, gamut_FINAL
-
+    return df
     
     
 #determine SKU or node search
@@ -84,6 +102,7 @@ data_type = fd.search_type()
 gamut_df = pd.DataFrame()
 grainger_df = pd.DataFrame()
 attribute_df = pd.DataFrame()
+grainger_sample = pd.DataFrame()
 
 gamut_l3 = dict()
 
@@ -97,11 +116,15 @@ if data_type == 'node':
     for k in search_data:
         grainger_df = gcom.grainger_q(grainger_attr_query, search_level, k)
         if grainger_df.empty == False:
-            temp_df, grainger_df, gamut_df  = grainger_process(grainger_df, k)
+            grainger_sample = grainger_value_counts(grainger_df)
+          # grainger_sample = grainger_df.drop(columns=['Count'])
+            grainger_sample = grainger_sample.rename(columns={'Grainger_Attribute_Value': 'Grainger Attribute Sample Values'})
+            temp_df = grainger_process(grainger_df, grainger_sample, k)
             attribute_df = pd.concat([attribute_df, temp_df], axis=0, sort=False)
         else:
             print('No attribute data')
         attribute_df['Grainger-Gamut Terminal Node Mapping'] = attribute_df['CATEGORY_NAME']+' -- '+attribute_df['Gamut Node Name']
+        attribute_df = attribute_df.drop(['Count'], axis=1)
         print ('Grainger ', k)
 
 # DO WE NEED THIS? true/false list of whether atts are in common
@@ -119,8 +142,7 @@ outfile2 = Path(settings.directory_name)/"GRAINGER.xlsx"
 outfile3 = Path(settings.directory_name)/"GAMUT.xlsx"
 
 #TEMP DROP FOR WORKING
-attribute_df = attribute_df.drop(columns=['attribute_level_definition', 'cat_specific_attr_definition', 'Gamut_Attribute_Definition'])
+#attribute_df = attribute_df.drop(columns=['attribute_level_definition', 'cat_specific_attr_definition', 'Gamut_Attribute_Definition'])
 attribute_df.to_excel (outfile, index=None, header=True, encoding='utf-8')
 
-grainger_df.to_excel (outfile2, index=None, header=True, encoding='utf-8')
-gamut_df.to_excel (outfile3, index=None, header=True, encoding='utf-8')
+grainger_sample.to_excel(outfile2)
