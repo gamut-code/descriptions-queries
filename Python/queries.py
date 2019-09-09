@@ -163,7 +163,7 @@ grainger_discontinued_query="""
 
             INNER JOIN PRD_DWH_VIEW_MTRL.CATEGORY_V AS cat
             	ON cat.CATEGORY_ID = item.CATEGORY_ID
-        		AND item.DELETED_FLAG = 'N'
+        	--	AND item.DELETED_FLAG = 'N'
                 
             FULL OUTER JOIN PRD_DWH_VIEW_LMT.Prod_Yellow_Heir_Class_View AS yellow
                 ON yellow.PRODUCT_ID = item.MATERIAL_NO

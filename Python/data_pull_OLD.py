@@ -22,8 +22,5 @@ def get_old_data():
              'CA Identified Matching Gamut Attribute Name (use semi-colon to separate names)',
              'CA Identified Matching Grainger Attribute Name (use semi-colon to separate names)']]
 
-    df = df.dropna(subset=['CA Identified Matching Gamut Attribute Name (use semi-colon to separate names)', 
-                           'CA Identified Matching Grainger Attribute Name (use semi-colon to separate names)'], 
-                            how='all')
-
+    df.to_excel('old data.csv')
     return df

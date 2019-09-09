@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import pandas as pd
 import settings
+import pandas.io.formats.excel
 
 
 def search_type():
@@ -143,13 +144,20 @@ def outfile_name (directory_name, quer, df, search_level, gamut='no'):
                 outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,6], df.iloc[0,7], quer)
         elif quer == 'ATTRIBUTES':
             outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,3], df.iloc[0,2], quer)
+        elif quer == 'GRAINGER-GAMUT':
+            if search_level == 'cat.SEGMENT_ID':    #set directory path and name output file
+                outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,1], df.iloc[0,2], quer)
+            elif search_level == 'cat.FAMILY_ID':
+                outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,3], df.iloc[0,4], quer)
+            else:
+                outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,5], df.iloc[0,6], quer)
         else:
             if search_level == 'cat.SEGMENT_ID':
                 outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,1], df.iloc[0,2], quer)
             elif search_level == 'cat.FAMILY_ID':
                 outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,3], df.iloc[0,4], quer)
             else:
-                outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,4], df.iloc[0,5], quer)
+                outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,5], df.iloc[0,6], quer)
     return outfile
     
 
@@ -181,7 +189,7 @@ def shorties_data_out(directory_name, grainger_df, gamut_df, search_level):
     quer = 'DESC'
     grainger_df['CATEGORY_NAME'] = modify_name(grainger_df['CATEGORY_NAME'], '/', '_') #clean up node names to include them in file names   
  
-    grainger_df.set_index('Grainger_SKU', inplace=True)
+    #grainger_df.set_index('Grainger_SKU', inplace=True)
     
     #if gamut data is present for these skus, merge with grainger data
     if gamut_df.empty == False:
@@ -197,7 +205,6 @@ def shorties_data_out(directory_name, grainger_df, gamut_df, search_level):
       
     grainger_df.to_excel (writer, sheet_name="Shorties", startrow=0, startcol=0, index=False)
    
-  #  workbook  = writer.book
     worksheet1 = writer.sheets['Shorties']
     
     col_widths = get_col_widths(grainger_df)
@@ -254,6 +261,75 @@ def attr_data_out(directory_name, df, df_stats, df_fill, search_level):
     writer.save()
 
 
+def attribute_match_data_out(directory_name, df, search_level):
+    # Create a Pandas Excel writer using XlsxWriter as the engine.
+    df['Category_Name'] = modify_name(df['Category_Name'], '/', '_') #clean up node names to include them in file names       
+
+    quer = 'GRAINGER-GAMUT'
+    
+    order = [10, 0, 1, 2, 3, 4, 5, 13, 14, 15, 12, 16, 21, 8, 9, 11, 6, 7, 22, 23, 24, 25, 18, 17, 20, 19] 
+    df = col_order(df, order)
+    outfile = outfile_name (directory_name, quer, df, search_level)
+    
+    writer = pd.ExcelWriter(outfile, engine='xlsxwriter')
+    
+    pd.io.formats.excel.header_style = None
+    
+    # Write each dataframe to a different worksheet.
+    df.to_excel(writer, sheet_name='Data', index=False)
+    
+    # Get the xlsxwriter workbook and worksheet objects.
+    workbook  = writer.book
+    worksheet1 = writer.sheets['Data']
+    
+    layout = workbook.add_format()
+    layout.set_text_wrap('text_wrap')
+    layout.set_align('left')
+    
+    header_fmt = workbook.add_format()
+    header_fmt.set_text_wrap('text_wrap')
+    header_fmt.set_bold()
+    #header_fmt.set_bg_color('#FF0000')
+
+    num_layout = workbook.add_format()
+    num_layout.set_num_format('##0.00')
+                              
+        
+    #setup display for Stats sheet
+    #set header different
+    worksheet1.set_row(0, None, header_fmt)
+    
+    worksheet1.set_column('A:A', 40, layout)
+    worksheet1.set_column('B:B', 15, layout)
+    worksheet1.set_column('C:C', 30, layout)
+    worksheet1.set_column('D:D', 15, layout)
+    worksheet1.set_column('E:E', 30, layout)
+    worksheet1.set_column('F:F', 15, layout)
+    worksheet1.set_column('G:G', 30, layout)
+    worksheet1.set_column('H:H', 40, layout)
+    worksheet1.set_column('I:I', 20, layout)
+    worksheet1.set_column('J:J', 30, layout)
+    worksheet1.set_column('K:K', 15, layout)
+    worksheet1.set_column('L:L', 30, layout)
+    worksheet1.set_column('M:M', 40, layout)
+    worksheet1.set_column('N:N', 50, layout)
+    worksheet1.set_column('O:O', 50, layout)
+    worksheet1.set_column('P:P', 40, layout)
+    worksheet1.set_column('Q:Q', 15, layout)
+    worksheet1.set_column('R:R', 40, layout)
+    worksheet1.set_column('S:S', 30, layout)
+    worksheet1.set_column('T:T', 30, layout)
+    worksheet1.set_column('U:U', 30, layout)
+    worksheet1.set_column('V:V', 30, layout)
+    worksheet1.set_column('W:W', 30, layout)
+    worksheet1.set_column('X:X', 15, layout)
+    worksheet1.set_column('Y:Y', 40, layout)
+    worksheet1.set_column('Z:Z', 50, layout)
+        
+    writer.save()
+    
+    
+    
 #output for specific sample pull
 def sample_data_out(directory_name, sku_count, audit_df, grainger_df, sample, search_level):
     """Create the Audit Analysis spreadsheet. 'Audit List' (sheet 1) = the list of SKUs to be audited)"""

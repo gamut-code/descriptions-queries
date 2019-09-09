@@ -10,7 +10,7 @@ gamut_basic_query="""
     SELECT
           tprod."gtPartNumber" as "Gamut_SKU"
         , tprod."supplierSku" as "Grainger_SKU"
-        , tprod."categoryId" AS "PIM Terminal Node ID"
+        , tprod."categoryId" AS "Gamut Node ID"
         
     FROM taxonomy_product tprod
     
@@ -40,8 +40,10 @@ gamut_attr_query="""
             )
 
     SELECT
-          array_to_string(tax.ancestor_names || tax.name,' > ') as "PIM Terminal Node Path"
-        , tprod."categoryId" AS "PIM Terminal Node ID"
+          array_to_string(tax.ancestor_names || tax.name,' > ') as "Gamut PIM Path"
+        , tax.ancestors[1] as "Gamut Category ID"  
+        , tax.ancestor_names[1] as "Gamut Category Name"
+        , tprod."categoryId" AS "Gamut Node ID"
         , tax.name as "Gamut Node Name"
         , tprod."gtPartNumber" as "Gamut_SKU"
         , tprod."supplierSku" as "Grainger_SKU"
@@ -75,18 +77,18 @@ gamut_attr_query="""
         
 #pull attribute values from Grainger teradata material universe by L3
 grainger_attr_query="""
-           	SELECT cat.SEGMENT_NAME AS L1
-            , cat.FAMILY_NAME AS L2
-            , cat.CATEGORY_NAME
+           	SELECT cat.SEGMENT_ID AS L1
+            , cat.SEGMENT_NAME AS Segment_Name
+            , cat.FAMILY_ID AS L2
+            , cat.FAMILY_NAME AS Family_Name
             , cat.CATEGORY_ID AS L3
+            , cat.CATEGORY_NAME AS Category_Name
             , item.MATERIAL_NO AS Grainger_SKU
             , attr.DESCRIPTOR_ID as Grainger_Attr_ID
-            , attr.DESCRIPTOR_NAME AS Grainger_Attribute_Name
-            , item_attr.ITEM_DESC_VALUE AS Grainger_Attribute_Value
-            , attr.attribute_level_definition
-            , cat_desc.cat_specific_attr_definition
-            , cat_desc.ENDECA_RANKING
-
+            , attr.DESCRIPTOR_NAME as Grainger_Attribute_Name
+            , item_attr.ITEM_DESC_VALUE as Grainger_Attribute_Value
+            , attr.attribute_level_definition as Grainger_Attribute_Definition
+            , cat_desc.cat_specific_attr_definition as Grainger_Category_Specific_Definition
 
             FROM PRD_DWH_VIEW_MTRL.ITEM_DESC_V AS item_attr
 
@@ -116,5 +118,6 @@ grainger_attr_query="""
             INNER JOIN PRD_DWH_VIEW_LMT.Prod_Yellow_Heir_Class_View AS yellow
                 ON yellow.PRODUCT_ID = item.MATERIAL_NO
 
-            WHERE {} IN ({})
+            WHERE item.SALES_STATUS NOT IN ('DG', 'DV', 'WV', 'WG')
+                AND {} IN ({})
             """
