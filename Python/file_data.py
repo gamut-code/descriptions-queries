@@ -267,7 +267,7 @@ def attribute_match_data_out(directory_name, df, search_level):
 
     quer = 'GRAINGER-GAMUT'
     
-    order = [10, 0, 1, 2, 3, 4, 5, 13, 14, 15, 12, 16, 21, 8, 9, 11, 6, 7, 22, 23, 24, 25, 18, 17, 20, 19] 
+    order = [10, 0, 1, 2, 3, 4, 5, 13, 14, 15, 12, 16, 21, 8, 9, 11, 6, 7, 22, 23, 24, 25, 18, 17, 20, 19, 26] 
     df = col_order(df, order)
     outfile = outfile_name (directory_name, quer, df, search_level)
     
