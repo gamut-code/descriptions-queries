@@ -151,6 +151,13 @@ def outfile_name (directory_name, quer, df, search_level, gamut='no'):
                 outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,3], df.iloc[0,4], quer)
             else:
                 outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,5], df.iloc[0,6], quer)
+        elif quer == 'PROD_ALTERNATES':
+            if search_level == 'PRD_DWH_VIEW_MTRL.CATEGORY_V.SEGMENT_ID':    #set directory path and name output file
+                outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,0], df.iloc[0,1], quer)
+            elif search_level == 'PRD_DWH_VIEW_MTRL.CATEGORY_V.FAMILY_ID':
+                outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,2], df.iloc[0,3], quer)
+            else:
+                outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,4], df.iloc[0,5], quer)
         else:
             if search_level == 'cat.SEGMENT_ID':
                 outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,1], df.iloc[0,2], quer)
@@ -162,10 +169,9 @@ def outfile_name (directory_name, quer, df, search_level, gamut='no'):
     
 
 #general output to xlsx file, used for the basic query
-def data_out(directory_name, grainger_df, search_level):
+def data_out(directory_name, grainger_df, quer, search_level):
     """basic output for any Grainger query""" 
     os.chdir(directory_name) #set output file path
-    quer = 'HIER'
     
     if grainger_df.empty == False:
       #  grainger_df['CATEGORY_NAME'] = modify_name(grainger_df['CATEGORY_NAME'], '/', '_') #clean up node names to include them in file names

@@ -12,5 +12,6 @@ import hierarchy as hier
 
 grainger_df, search_level = hier.generate_data()
 
+quer='HIER'
 
-fd.data_out(settings.directory_name, grainger_df, search_level)
+fd.data_out(settings.directory_name, grainger_df, quer, search_level)
