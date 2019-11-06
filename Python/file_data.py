@@ -174,6 +174,7 @@ def data_out(directory_name, grainger_df, quer, search_level):
     os.chdir(directory_name) #set output file path
     
     if grainger_df.empty == False:
+        grainger_df['CATEGORY_NAME'] = modify_name(grainger_df['CATEGORY_NAME'], '/', '_') #clean up node names to include them in file names   
       #  grainger_df['CATEGORY_NAME'] = modify_name(grainger_df['CATEGORY_NAME'], '/', '_') #clean up node names to include them in file names
         outfile = outfile_name (directory_name, quer, grainger_df, search_level)
         writer = pd.ExcelWriter(outfile, engine='xlsxwriter')

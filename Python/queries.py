@@ -402,3 +402,36 @@ FROM
   
 WHERE PRD_DWH_VIEW_MTRL.ALT_ACC_V.LABEL = 'A'
     AND {} IN ({})"""
+    
+
+grainger_gp_web_price="""
+SELECT
+  PRD_DWH_VIEW_LMT.Sales_Invoice_Summary_V.MATERIAL
+  , sum(PRD_DWH_VIEW_LMT.Sales_Invoice_Summary_V.SUBTOTAL_2) - sum(PRD_DWH_VIEW_LMT.Sales_Invoice_Summary_V.G_AVRPRS) AS GP
+  , sum(PRD_DWH_VIEW_LMT.material_V.WEB_PRICE)
+  
+FROM
+  PRD_DWH_VIEW_LMT.Sales_Invoice_Summary_V,
+  PRD_DWH_VIEW_LMT.material_V,
+  PRD_DWH_VIEW_LMT.FISCAL_PERIOD
+  
+WHERE
+  ( PRD_DWH_VIEW_LMT.FISCAL_PERIOD.fiscper=PRD_DWH_VIEW_LMT.Sales_Invoice_Summary_V.FISCPER  )
+  AND  ( PRD_DWH_VIEW_LMT.material_V.MATERIAL=PRD_DWH_VIEW_LMT.Sales_Invoice_Summary_V.MATERIAL  )
+  AND  
+  (
+   ( (PRD_DWH_VIEW_LMT.Sales_Invoice_Summary_V.ACCNT_ASGN in ('01','20') or PRD_DWH_VIEW_LMT.Sales_Invoice_Summary_V.ACCNT_ASGN is null) and PRD_DWH_VIEW_LMT.Sales_Invoice_Summary_V.DIVISION = '01' and PRD_DWH_VIEW_LMT.Sales_Invoice_Summary_V.COMP_CODE in ('0300','1070') and PRD_DWH_VIEW_LMT.material_V.MATL_TYPE IN ('HAWA',  'ZBLK', 'ZMTO', 'ZMTS')  )
+   AND
+   PRD_DWH_VIEW_LMT.material_V.Pricing_Flag  =  'C'
+   AND
+   PRD_DWH_VIEW_LMT.material_V.ZVMSTA  NOT IN  ( 'WG','WV','DG','DV'  )
+   AND
+   PRD_DWH_VIEW_LMT.material_V.EXTMATLGRP  <>  'R9'
+   AND
+   PRD_DWH_VIEW_LMT.FISCAL_PERIOD.rolling12  =  'Y'
+   AND
+   {}  IN  ({})
+  )
+GROUP BY
+  1
+"""
