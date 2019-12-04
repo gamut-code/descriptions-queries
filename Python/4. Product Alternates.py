@@ -49,11 +49,11 @@ elif data_type == 'sku':
     sku_str = ", ".join("'" + str(i) + "'" for i in search_data)
     grainger_df = gcom.grainger_q(grainger_product_alternates, 'PRD_DWH_VIEW_MTRL.ITEM_V.MATERIAL_NO', sku_str)
     if grainger_df.empty == False:
-        fd.data_out(settings.directory_name, grainger_df, quer, search_level)
+        fd.data_out(settings.directory_name, grainger_df, search_level, quer)
     else:
         print('No SKU data for ', sku_str)
 
-fd.data_out(settings.directory_name, grainger_df, quer, search_level)
+fd.data_out(settings.directory_name, grainger_df, search_level, quer)
 
                      
 print("--- {} seconds ---".format(round(time.time() - start_time, 2)))

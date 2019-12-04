@@ -169,7 +169,7 @@ def outfile_name (directory_name, quer, df, search_level, gamut='no'):
     
 
 #general output to xlsx file, used for the basic query
-def data_out(directory_name, grainger_df, quer, search_level):
+def data_out(directory_name, grainger_df, search_level, quer ='MISC'):
     """basic output for any Grainger query""" 
     os.chdir(directory_name) #set output file path
     

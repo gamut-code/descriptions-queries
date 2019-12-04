@@ -142,7 +142,7 @@ def data_out(grainger_df, sales_df, supplier_df, top_suppliers):
     worksheet1.set_column('L:L', 15, num_layout)
     
 
-    worksheet1.set_column('B:B', 30, layout)
+    worksheet2.set_column('B:B', 30, layout)
     worksheet2.set_column('D:D', 30, layout)
     worksheet2.set_column('F:F', 40, layout)
     worksheet2.set_column('G:G', 20, layout)

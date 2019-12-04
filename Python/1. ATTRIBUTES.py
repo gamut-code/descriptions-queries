@@ -110,7 +110,7 @@ elif data_type == 'name':
             k = "'%" + str(k) + "%'"
         df = gcom.grainger_q(grainger_value_query, 'attr.DESCRIPTOR_NAME', k)
         if df.empty == False:
-            fd.data_out(settings.directory_name, df, search_level)
+            fd.data_out(settings.directory_name, df, search_level, 'ATTR')
         else:
             print('No results returned')
         print(k)
@@ -125,7 +125,7 @@ elif data_type == 'value':
             k = "'%" + str(k) + "%'"
         df = gcom.grainger_q(grainger_value_query, 'item_attr.ITEM_DESC_VALUE', k)
         if df.empty == False:
-            fd.data_out(settings.directory_name, df, search_level)
+            fd.data_out(settings.directory_name, df, search_level, 'ATTR')
         else:
             print('No results returned')
         print(k)

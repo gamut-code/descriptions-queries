@@ -343,7 +343,7 @@ LEFT JOIN
     , sum(si.inv_qty) AS units
     
     FROM PRD_DWH_VIEW_LMT.sales_invoice_v AS si
-    WHERE si.fiscper between 2018007 and 2019007 -- change data range to get last 12 months sales info 
+    WHERE si.fiscper between 2018009 and 2019009 -- change data range to get last 12 months sales info 
           AND si.division = '01'
     GROUP BY si.material
     ) AS inv
