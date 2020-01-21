@@ -111,11 +111,6 @@ def data_in(data_type, directory_name):
         search_data = [search_data]
         return search_data
     else:
-        #read file
-#        file_name = settings.get_file_name()
-#        file_path = Path(directory_name)/file_name  #setup the data file to read
-#        file_path = os.path.join(directory_name, file_name)
-#        file_data = [re.split('\s+', i.strip('\n')) for i in open(file_path)]
         file_data = settings.get_file_data()
 
         if data_type == 'node':
@@ -123,7 +118,6 @@ def data_in(data_type, directory_name):
             return search_data
         elif data_type == 'yellow':
             search_data = [str(row[0]) for row in file_data[1:]]
-#            search_data = file_data
             return search_data
         elif data_type == 'sku':
             search_data = [row[0] for row in file_data[1:]]
@@ -175,7 +169,6 @@ def data_out(directory_name, grainger_df, search_level, quer ='MISC'):
     
     if grainger_df.empty == False:
         grainger_df['CATEGORY_NAME'] = modify_name(grainger_df['CATEGORY_NAME'], '/', '_') #clean up node names to include them in file names   
-      #  grainger_df['CATEGORY_NAME'] = modify_name(grainger_df['CATEGORY_NAME'], '/', '_') #clean up node names to include them in file names
         outfile = outfile_name (directory_name, quer, grainger_df, search_level)
         writer = pd.ExcelWriter(outfile, engine='xlsxwriter')
         grainger_df.to_excel (writer, sheet_name="DATA", startrow=0, startcol=0, index=False)

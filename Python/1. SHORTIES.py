@@ -36,10 +36,7 @@ if data_type == 'node':
     for k in search_data:
         grainger_df = gcom.grainger_q(grainger_short_query, search_level, k)
         if grainger_df.empty == False:
-          #  if search_level == 'cat.CATEGORY_ID':
             gamut_df = gamut_data(grainger_df)
-            #else:
-             #   pass
             fd.shorties_data_out(settings.directory_name, grainger_df, gamut_df, search_level)
         else:
            print('All SKUs are R4, R9, or discontinued')

@@ -265,14 +265,14 @@ grainger_attr_query="""
 grainger_value_query="""
            	SELECT cat.SEGMENT_NAME AS L1
             , cat.FAMILY_NAME AS L2
-            , cat.CATEGORY_NAME
             , cat.CATEGORY_ID AS L3
+            , cat.CATEGORY_NAME
             , item.MATERIAL_NO AS Grainger_SKU
             , item.MFR_MODEL_NO AS Mfr_Part_No
             , attr.DESCRIPTOR_NAME AS Attribute
             , item_attr.ITEM_DESC_VALUE AS Attribute_Value
-            , cat_desc.ENDECA_RANKING
             , item.PM_CODE AS PM_Code
+            , item.SHORT_DESCRIPTION AS Item_Description
             , yellow.PROD_CLASS_ID AS Yellow_ID
 
 

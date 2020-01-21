@@ -9,6 +9,7 @@ from grainger_query import GraingerQuery
 from queries import grainger_attr_query, grainger_value_query
 import file_data as fd
 import settings
+import time
 
 gcom = GraingerQuery()
 
@@ -46,6 +47,7 @@ def get_fill_rate(df):
 search_level = 'cat.CATEGORY_ID'
 data_type = fd.search_type()
 
+
 if data_type == 'node':
     search_level = fd.blue_search_level()
 elif data_type == 'value' or data_type == 'name':
@@ -63,6 +65,8 @@ elif data_type == 'value' or data_type == 'name':
     
 search_data = fd.data_in(data_type, settings.directory_name)
 
+start_time = time.time()
+print('working...')
 
 if data_type == 'node':
     for k in search_data:
@@ -74,6 +78,8 @@ if data_type == 'node':
         else:
             print('All SKUs are R4, R9, or discontinued')
         print (k)
+        print("--- {} seconds ---".format(round(time.time() - start_time, 2)))
+
 elif data_type == 'yellow':
     for k in search_data:
         if isinstance(k, int):#k.isdigit() == True:
@@ -88,6 +94,8 @@ elif data_type == 'yellow':
         else:
             print('All SKUs are R4, R9, or discontinued')
         print (k)
+        print("--- {} seconds ---".format(round(time.time() - start_time, 2)))
+
 elif data_type == 'sku':
         sku_str = ", ".join("'" + str(i) + "'" for i in search_data)
         df = gcom.grainger_q(grainger_attr_query, 'item.MATERIAL_NO', sku_str)
@@ -99,10 +107,12 @@ elif data_type == 'sku':
         else:
             print('All SKUs are R4, R9, or discontinued')
         print(search_data)
+        print("--- {} seconds ---".format(round(time.time() - start_time, 2)))
+        
 elif data_type == 'name':
     for k in search_data:
         if val_type == 'exact':
-            if isinstance(k, int):#k.isdigit() == True:
+            if isinstance(k, int):  #k.isdigit() == True:
                 pass
             else:
                 k = "'" + str(k) + "'"
@@ -114,10 +124,12 @@ elif data_type == 'name':
         else:
             print('No results returned')
         print(k)
+        print("--- {} seconds ---".format(round(time.time() - start_time, 2)))
+        
 elif data_type == 'value':
     for k in search_data:
-        if val_type == 'approx':
-            if isinstance(k, int):#k.isdigit() == True:
+        if val_type == 'exact':
+            if isinstance(k, int):  #k.isdigit() == True:
                 pass
             else:
                 k = "'" + str(k) + "'"
@@ -129,3 +141,4 @@ elif data_type == 'value':
         else:
             print('No results returned')
         print(k)
+        print("--- {} seconds ---".format(round(time.time() - start_time, 2)))
