@@ -173,8 +173,54 @@ grainger_discontinued_query="""
 
             WHERE {} IN ({})
             """
-            
-            
+
+# pull only discontinued SKUs
+grainger_ONLY_discontinueds="""
+            SELECT cat.SEGMENT_ID AS L1
+            , cat.SEGMENT_NAME
+            , cat.FAMILY_ID AS L2
+            , cat.FAMILY_NAME
+            , cat.CATEGORY_ID AS L3
+            , cat.CATEGORY_NAME
+            , item.MATERIAL_NO AS Grainger_SKU
+            , item.MFR_MODEL_NO AS Mfr_Part_No
+            , attr.DESCRIPTOR_NAME AS Grainger_Attribute_Name
+            , item_attr.ITEM_DESC_VALUE AS Attribute_Value
+--            , cat_desc.ENDECA_RANKING
+            , item.RELATIONSHIP_MANAGER_CODE AS RMC
+            , item.SALES_STATUS AS Sales_Status
+            , item.PM_CODE AS PM_Code
+--            , yellow.PROD_CLASS_ID AS Yellow_ID
+
+            FROM PRD_DWH_VIEW_MTRL.ITEM_DESC_V AS item_attr
+
+            INNER JOIN PRD_DWH_VIEW_MTRL.ITEM_V AS item
+                ON 	item_attr.MATERIAL_NO = item.MATERIAL_NO
+                AND item.DELETED_FLAG = 'N'
+                AND item_attr.DELETED_FLAG = 'N'
+                AND item_attr.LANG = 'EN'
+                AND item.PRODUCT_APPROVED_US_FLAG = 'Y'
+
+            INNER JOIN PRD_DWH_VIEW_MTRL.CATEGORY_V AS cat
+                ON cat.CATEGORY_ID = item_attr.CATEGORY_ID
+                AND item_attr.DELETED_FLAG = 'N'
+
+            INNER JOIN PRD_DWH_VIEW_MTRL.CAT_DESC_V AS cat_desc
+                ON cat_desc.CATEGORY_ID = item_attr.CATEGORY_ID
+                AND cat_desc.DESCRIPTOR_ID = item_attr.DESCRIPTOR_ID
+                AND cat_desc.DELETED_FLAG='N'
+
+            INNER JOIN PRD_DWH_VIEW_MTRL.MAT_DESCRIPTOR_V AS attr
+                ON attr.DESCRIPTOR_ID = item_attr.DESCRIPTOR_ID
+                AND attr.DELETED_FLAG = 'N'
+
+  --          INNER JOIN PRD_DWH_VIEW_LMT.Prod_Yellow_Heir_Class_View AS yellow
+  --              ON yellow.PRODUCT_ID = item.MATERIAL_NO
+
+            WHERE item.SALES_STATUS IN ('DG', 'DV', 'WV', 'WG')
+                AND {} IN ({})
+            """                
+                
 #pull item and SEO descrpitions from the grainger teradata material universe
 grainger_short_query="""
             SELECT item.MATERIAL_NO AS Grainger_SKU
@@ -215,6 +261,47 @@ grainger_short_query="""
             	AND {} IN ({})
             """
 
+
+#pull item and SEO descrpitions from the grainger teradata material universe
+grainger_short_values="""
+            SELECT item.MATERIAL_NO AS Grainger_SKU
+            , cat.SEGMENT_ID AS L1
+            , cat.SEGMENT_NAME
+            , cat.FAMILY_ID AS L2
+            , cat.FAMILY_NAME
+            , cat.CATEGORY_ID AS L3
+            , cat.CATEGORY_NAME
+            , item.SHORT_DESCRIPTION AS Item_Description
+            , item.GIS_SEO_SHORT_DESC_AUTOGEN AS SEO_Description
+            , item.PM_CODE
+            , yellow.PROD_CLASS_ID AS Gcom_Yellow
+            , flat.Web_Parent_Name AS Gcom_Web_Parent
+
+            FROM PRD_DWH_VIEW_LMT.ITEM_V AS item
+
+            INNER JOIN PRD_DWH_VIEW_MTRL.CATEGORY_V AS cat
+            	ON cat.CATEGORY_ID = item.CATEGORY_ID
+        		AND item.DELETED_FLAG = 'N'
+                AND item.PRODUCT_APPROVED_US_FLAG = 'Y'
+                AND item.PM_CODE NOT IN ('R9')
+                AND item.PM_CODE NOT IN ('R4')
+
+            INNER JOIN PRD_DWH_VIEW_LMT.Prod_Yellow_Heir_Class_View AS yellow
+                ON yellow.PRODUCT_ID = item.MATERIAL_NO
+
+            INNER JOIN PRD_DWH_VIEW_LMT.Yellow_Heir_Flattend_view AS flat
+                ON yellow.PROD_CLASS_ID = flat.Heir_End_Class_Code
+
+            INNER JOIN PRD_DWH_VIEW_MTRL.BRAND_V AS brand
+                ON item.BRAND_NO = brand.BRAND_NO
+
+            INNER JOIN PRD_DWH_VIEW_MTRL.SUPPLIER_V AS supplier
+            	ON supplier.SUPPLIER_NO = item.SUPPLIER_NO
+
+            WHERE item.SALES_STATUS NOT IN ('DG', 'DV', 'WV', 'WG')
+            	AND LOWER({}) LIKE LOWER ({})
+            """
+
 #pull attribute values from Grainger teradata material universe by L3
 grainger_attr_query="""
            	SELECT cat.SEGMENT_NAME AS L1
@@ -224,8 +311,8 @@ grainger_attr_query="""
             , item.MATERIAL_NO AS Grainger_SKU
             , item.MFR_MODEL_NO AS Mfr_Part_No
             , attr.DESCRIPTOR_NAME AS Attribute
-            , item_attr.ITEM_DESC_VALUE AS Attribute_Value
             , cat_desc.ENDECA_RANKING
+            , item_attr.ITEM_DESC_VALUE AS Attribute_Value
             , item.PM_CODE AS PM_Code
             , yellow.PROD_CLASS_ID AS Yellow_ID
 

@@ -125,7 +125,7 @@ elif data_type == 'name':
             print('No results returned')
         print(k)
         print("--- {} seconds ---".format(round(time.time() - start_time, 2)))
-        
+
 elif data_type == 'value':
     for k in search_data:
         if val_type == 'exact':

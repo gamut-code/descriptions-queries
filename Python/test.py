@@ -5,7 +5,6 @@ Spyder Editor
 This is a temporary script file.
 """
 
-import pandas as pd
 from graingerio import TeraClient
 import time
 
@@ -14,37 +13,35 @@ tc = TeraClient()
 
 #def test_query(search, k):
 test_q="""
-   	SELECT 
-		item.MATERIAL
-		, cat.CATALOG_INDEX_LEVEL1_IEN AS TDLMT2_level1
-		, cat.CATALOG_INDEX_LEVEL2_IEN AS TDLMT2_Level2
-		, cat.CATALOG_INDEX_LEVEL3_IEN AS TDLMT2_Level3
-		, brand.CATALOG_INDEX_LEVEL1_IEN AS Brand_INDEX_LEVEL1
-		, brand.CATALOG_INDEX_LEVEL2_IEN AS Brand_INDEX_LEVEL2
-        , cat2.CATALOG_INDEX_LEVEL1_IEN AS TDLMT_level1
-        , cat2.CATALOG_INDEX_LEVEL2_IEN AS TDLMT_level2
-        , cat2.CATALOG_INDEX_LEVEL3_IEN AS TDLMT_level3
-		, page.CATALOG_2020_PAGE AS Catalog_128
-        , category.*
+    SELECT cat.SEGMENT_ID AS Segment_ID
+      , cat.SEGMENT_NAME AS Segment_Name
+      , cat.FAMILY_ID AS Family_ID
+      , cat.FAMILY_NAME AS Family_Name
+      , cat.CATEGORY_ID AS Category_ID
+      , cat.CATEGORY_NAME AS Category_Name
+      , yellow.*
 
-FROM PRD_DWH_VIEW_LMT.AGI_CATALOG_INDEX_V AS cat
+            
+FROM PRD_DWH_VIEW_MTRL.ITEM_DESC_V AS item_attr
 
-INNER JOIN PRD_DWH_VIEW_LMT.AGI_Item_V AS item
-	ON 	cat.MATERIAL = item.MATERIAL
+INNER JOIN PRD_DWH_VIEW_MTRL.ITEM_V AS item
+    ON 	item_attr.MATERIAL_NO = item.MATERIAL_NO
+    AND item.DELETED_FLAG = 'N'
+    AND item_attr.DELETED_FLAG = 'N'
+    AND item_attr.LANG = 'EN'
+    AND item.PRODUCT_APPROVED_US_FLAG = 'Y'
 
-LEFT OUTER JOIN PRD_DWH_VIEW_LMT.AGI_ITEM_CATALOG_PAGE_V AS page
-	ON page.MATERIAL = cat.MATERIAL
-	
-LEFT OUTER JOIN PRD_DWH_VIEW_LMT.AGI_CAT_BRAND_INDEX_V AS brand
-	ON brand.MATERIAL = page.MATERIAL
+LEFT OUTER JOIN PRD_DWH_VIEW_LMT.Prod_Yellow_Heir_Class_view AS yellow
+    ON item.PRODUCT_APPROVED_US_FLAG = 'Y'
+    AND item.MATERIAL_NO = yellow.PRODUCT_ID
 
-LEFT OUTER JOIN PRD_DWH_VIEW_MTRL.AGI_CATALOG_INDEX_V AS cat2
-    ON cat2.MATERIAL = cat.MATERIAL
+INNER JOIN PRD_DWH_VIEW_MTRL.CATEGORY_V AS cat
+    ON cat.CATEGORY_ID = item_attr.CATEGORY_ID
+    AND item_attr.DELETED_FLAG = 'N'
+    AND item.PM_CODE NOT IN ('R9')
 
-LEFT OUTER JOIN PRD_DWH_VIEW_MTRL.CATEGORY_V AS category
-    ON category.CATEGORY_ID = item.CATEGORY_ID
-WHERE item.MATERIAL in ('AOSC271')
-"""
+WHERE {term} IN ({k})
+""".format(term='cat.CATEGORY_ID', k=8353)
 
 start_time = time.time()
 print('working...')

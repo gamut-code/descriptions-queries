@@ -71,8 +71,9 @@ def blue_search_level():
 
 
 
-def modify_name(df, replace_char, replace_with):
-    return df.str.replace(replace_char, replace_with)
+def modify_name(string, replace_char, replace_with):
+    pd.set_option('mode.chained_assignment', None)
+    return string.str.replace(replace_char, replace_with)
 
 
 def col_order(df, order):
@@ -128,6 +129,7 @@ def outfile_name (directory_name, quer, df, search_level, gamut='no'):
 #generate the file name used by the various output functions
     if search_level == 'SKU':
         outfile = Path(directory_name)/"SKU REPORT.xlsx"
+
     else:   
         if gamut == 'yes':
             if search_level == 'cat.SEGMENT_ID':    #set directory path and name output file
@@ -136,8 +138,10 @@ def outfile_name (directory_name, quer, df, search_level, gamut='no'):
                 outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,4], df.iloc[0,5], quer)
             else:
                 outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,6], df.iloc[0,7], quer)
+
         elif quer == 'ATTRIBUTES':
             outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,3], df.iloc[0,2], quer)
+
         elif quer == 'GRAINGER-GAMUT':
             if search_level == 'cat.SEGMENT_ID':    #set directory path and name output file
                 outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,1], df.iloc[0,2], quer)
@@ -145,6 +149,7 @@ def outfile_name (directory_name, quer, df, search_level, gamut='no'):
                 outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,3], df.iloc[0,4], quer)
             else:
                 outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,5], df.iloc[0,6], quer)
+
         elif quer == 'PROD_ALTERNATES':
             if search_level == 'PRD_DWH_VIEW_MTRL.CATEGORY_V.SEGMENT_ID':    #set directory path and name output file
                 outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,0], df.iloc[0,1], quer)
@@ -152,9 +157,12 @@ def outfile_name (directory_name, quer, df, search_level, gamut='no'):
                 outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,2], df.iloc[0,3], quer)
             else:
                 outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,4], df.iloc[0,5], quer)
+
         else:
-            if search_level == 'cat.SEGMENT_ID':
-                outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,1], df.iloc[0,2], quer)
+            if search_level == 'cat.CATEGORY_ID':
+                outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,4], df.iloc[0,5], quer)                
+            elif search_level == 'cat.SEGMENT_ID':
+                outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,0], df.iloc[0,1], quer)
             elif search_level == 'cat.FAMILY_ID':
                 outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,3], df.iloc[0,4], quer)
             else:
@@ -169,13 +177,20 @@ def data_out(directory_name, grainger_df, search_level, quer ='MISC'):
     
     if grainger_df.empty == False:
         grainger_df['CATEGORY_NAME'] = modify_name(grainger_df['CATEGORY_NAME'], '/', '_') #clean up node names to include them in file names   
+
         outfile = outfile_name (directory_name, quer, grainger_df, search_level)
+
         writer = pd.ExcelWriter(outfile, engine='xlsxwriter')
         grainger_df.to_excel (writer, sheet_name="DATA", startrow=0, startcol=0, index=False)
         worksheet = writer.sheets['DATA']
         col_widths = get_col_widths(grainger_df)
         col_widths = col_widths[1:]
+
         for i, width in enumerate(col_widths):
+            if width > 40:
+                width = 40
+            elif width < 10:
+                width = 10
             worksheet.set_column(i, i, width) 
         writer.save()
     else:
@@ -205,16 +220,19 @@ def shorties_data_out(directory_name, grainger_df, gamut_df, search_level):
       
     grainger_df.to_excel (writer, sheet_name="Shorties", startrow=0, startcol=0, index=False)
    
-    worksheet1 = writer.sheets['Shorties']
+    worksheet = writer.sheets['Shorties']
     
     col_widths = get_col_widths(grainger_df)
     col_widths = col_widths[1:]
     
     for i, width in enumerate(col_widths):
-        worksheet1.set_column(i, i, width)
-  
+        if width > 40:
+            width = 40
+        elif width < 10:
+            width = 10
+        worksheet.set_column(i, i, width) 
     writer.save()
-    
+      
 #output for attribute values for Grainger
 def attr_data_out(directory_name, df, df_stats, df_fill, search_level):
     # Create a Pandas Excel writer using XlsxWriter as the engine.
@@ -244,8 +262,7 @@ def attr_data_out(directory_name, df, df_stats, df_fill, search_level):
     
     num_layout = workbook.add_format()
     num_layout.set_num_format('##0.00')
-                              
-        
+                                      
     #setup display for Stats sheet
     worksheet1.set_column('A:A', 40, layout)
     worksheet1.set_column('B:B', 60, layout)
