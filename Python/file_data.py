@@ -150,7 +150,7 @@ def outfile_name (directory_name, quer, df, search_level, gamut='no'):
             else:
                 outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,5], df.iloc[0,6], quer)
 
-        elif quer == 'PROD_ALTERNATES':
+        elif quer == 'PROD_ALTERNATES' or quer == 'PROD_ACCESSORIES':
             if search_level == 'PRD_DWH_VIEW_MTRL.CATEGORY_V.SEGMENT_ID':    #set directory path and name output file
                 outfile = Path(directory_name)/"{} {} {}.xlsx".format(df.iloc[0,0], df.iloc[0,1], quer)
             elif search_level == 'PRD_DWH_VIEW_MTRL.CATEGORY_V.FAMILY_ID':
